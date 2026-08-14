@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Rooftop Control System | FYP</title>
+  
+  <!-- Google Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- Firebase (v8 SDK) & html2pdf CDN -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- System Header -->
+    <header class="header-card">
+      <div class="header-title">
+        <h1>SMART ROOFTOP CONTROLLER</h1>
+        <p class="subtitle">AUTOMATED INDUSTRIAL SYSTEM MONITORING</p>
+      </div>
+      <div class="connection-indicator">
+        <span class="pulse-dot"></span>
+        <span id="conn-text">CLOUD ACTIVE</span>
+      </div>
+    </header>
+
+    <!-- Main Grid Layout -->
+    <main class="dashboard-grid">
+      
+      <!-- Live Status Module -->
+      <section class="card status-section">
+        <div class="card-header">
+          <h2>SYSTEM MONITOR</h2>
+          <span class="card-tag">LIVE FEED</span>
+        </div>
+        
+        <div class="status-display">
+          <div class="status-label">CURRENT ROOF POSITION</div>
+          <div id="status-badge" class="badge connecting">CONNECTING...</div>
+          <div class="status-subtext" id="last-update">Awaiting data sync...</div>
+        </div>
+      </section>
+
+      <!-- Manual Control Panel Module -->
+      <section class="card control-section">
+        <div class="card-header">
+          <h2>MANUAL OVERRIDE</h2>
+          <span class="card-tag">ACTUATORS</span>
+        </div>
+        
+        <div class="button-grid">
+          <button id="btn-open" class="btn btn-open" onclick="setRoofState('OPEN')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+            OPEN ROOF
+          </button>
+          
+          <button id="btn-close" class="btn btn-close" onclick="setRoofState('CLOSED')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+            CLOSE ROOF
+          </button>
+        </div>
+      </section>
+
+      <!-- Telemetry Data & Export Panel -->
+      <section class="card data-section" id="report-section">
+        <div class="data-header">
+          <div>
+            <h2>SYSTEM TELEMETRY LOGS</h2>
+            <p class="data-subtitle">Real-time operation timestamp audit</p>
+          </div>
+          <button class="btn btn-pdf" onclick="generatePDF()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            EXPORT PDF
+          </button>
+        </div>
+
+        <div class="table-container">
+          <table class="telemetry-table">
+            <thead>
+              <tr>
+                <th>TIMESTAMP</th>
+                <th>ACTION TRIGGERED</th>
+                <th>SOURCE ORIGIN</th>
+              </tr>
+            </thead>
+            <tbody id="logs-table-body">
+              <tr>
+                <td colspan="3" class="loading-cell">Retrieving history logs from cloud...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+
+    <footer class="footer">
+      <p>Final Year Engineering Project &bull; Smart Rooftop System Platform</p>
+    </footer>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
