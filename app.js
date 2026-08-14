@@ -1,4 +1,4 @@
-// --- Firebase Database Configuration ---
+// Firebase Init
 const firebaseConfig = {
   databaseURL: "https://smart-rooftop-32071-default-rtdb.firebaseio.com/"
 };
@@ -6,77 +6,135 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 
-// --- Live Roof Status Listener ---
-database.ref('rooftop_system/roof_status').on('value', (snapshot) => {
-  const status = snapshot.val() || "UNKNOWN";
-  const badge = document.getElementById('status-badge');
-  const lastUpdate = document.getElementById('last-update');
+// Page Switcher
+function switchPage(pageId) {
+  document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
+  document.getElementById(pageId).classList.add('active');
   
+  if (pageId === 'page-2') {
+    setTimeout(() => { tempChart.resize(); }, 100);
+  }
+}
+
+// Chart.js Setup (Temperature vs Time)
+const ctx = document.getElementById('tempChart').getContext('2d');
+const tempChart = new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: [],
+    datasets: [{
+      label: 'Temperature (°C)',
+      data: [],
+      borderColor: '#38bdf8',
+      backgroundColor: 'rgba(56, 189, 248, 0.1)',
+      borderWidth: 2,
+      tension: 0.3,
+      fill: true
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: { ticks: { color: '#9ca3af', font: { size: 9 } }, grid: { color: '#1f293d' } },
+      y: { ticks: { color: '#9ca3af', font: { size: 9 } }, grid: { color: '#1f293d' } }
+    },
+    plugins: { legend: { display: false } }
+  }
+});
+
+// Live Roof Status & Sensor Data Listener
+database.ref('rooftop_system').on('value', (snapshot) => {
+  const data = snapshot.val() || {};
+  
+  // Status
+  const status = data.roof_status || "UNKNOWN";
+  const badge = document.getElementById('status-badge');
   badge.innerText = status;
   badge.className = 'badge ' + status.toLowerCase();
   
-  const now = new Date().toLocaleTimeString();
-  lastUpdate.innerText = `Last cloud sync: ${now}`;
+  document.getElementById('last-update').innerText = `Last sync: ${new Date().toLocaleTimeString()}`;
+  
+  // Sensors
+  document.getElementById('val-temp').innerText = (data.temp !== undefined ? data.temp : '28.5') + ' °C';
+  document.getElementById('val-bright').innerText = (data.brightness !== undefined ? data.brightness : '450') + ' Lux';
+  document.getElementById('val-humid').innerText = (data.humidity !== undefined ? data.humidity : '65') + ' %';
 });
 
-// --- Command Trigger Function ---
+// Set Command
 function setRoofState(state) {
-  // Update state node
   database.ref('rooftop_system/roof_status').set(state);
   
-  // Format precise timestamp
   const now = new Date();
-  const timestamp = now.getFullYear() + "-" +
-    String(now.getMonth() + 1).padStart(2, '0') + "-" +
-    String(now.getDate()).padStart(2, '0') + " " +
-    String(now.getHours()).padStart(2, '0') + ":" +
-    String(now.getMinutes()).padStart(2, '0') + ":" +
-    String(now.getSeconds()).padStart(2, '0');
-
-  // Push record into history log table
+  const timeStr = now.toLocaleTimeString();
+  
+  // Push full record for Page 2
   database.ref('rooftop_logs').push({
-    timestamp: timestamp,
-    action: state,
-    source: "Mobile App Command"
+    time: timeStr,
+    temp: document.getElementById('val-temp').innerText,
+    humid: document.getElementById('val-humid').innerText,
+    bright: document.getElementById('val-bright').innerText,
+    rain: "No Rain",
+    origin: "Mobile App"
   });
 }
 
-// --- Live Telemetry Data Logs Table Listener ---
-database.ref('rooftop_logs').limitToLast(8).on('value', (snapshot) => {
+// Data Logs & Chart Listener
+database.ref('rooftop_logs').limitToLast(15).on('value', (snapshot) => {
   const tableBody = document.getElementById('logs-table-body');
   tableBody.innerHTML = '';
   
   if (!snapshot.exists()) {
-    tableBody.innerHTML = '<tr><td colspan="3" class="loading-cell">No historical data records found.</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="6" class="loading-cell">No history logs recorded.</td></tr>';
     return;
   }
 
-  let logsArray = [];
-  snapshot.forEach((childSnapshot) => {
-    logsArray.unshift(childSnapshot.val()); // Latest records on top
-  });
+  let times = [];
+  let temps = [];
 
-  logsArray.forEach((log) => {
-    const row = document.createElement('tr');
+  snapshot.forEach((child) => {
+    const log = child.val();
     
-    // Highlight action colors
-    const actionColor = log.action === 'OPEN' ? '#10b981' : '#ef4444';
-
+    // Add row to table
+    const row = document.createElement('tr');
     row.innerHTML = `
-      <td style="font-family: monospace;">${log.timestamp}</td>
-      <td style="font-weight: 700; color: ${actionColor};">${log.action}</td>
-      <td>${log.source}</td>
+      <td style="font-family: monospace;">${log.time || '--'}</td>
+      <td>${log.temp || '--'}</td>
+      <td>${log.humid || '--'}</td>
+      <td>${log.bright || '--'}</td>
+      <td><span style="color: #10b981;">${log.rain || 'No Rain'}</span></td>
+      <td>${log.origin || 'System'}</td>
     `;
     tableBody.appendChild(row);
+
+    // Collect chart data
+    times.push(log.time || '');
+    temps.push(parseFloat(log.temp) || 28);
   });
+
+  // Update Graph
+  tempChart.data.labels = times;
+  tempChart.data.datasets[0].data = temps;
+  tempChart.update();
 });
 
-// --- Professional PDF Report Generator ---
+// Table Search/Filter Function
+function filterTable() {
+  const input = document.getElementById('table-search').value.toLowerCase();
+  const rows = document.querySelectorAll('#logs-table-body tr');
+  
+  rows.forEach(row => {
+    const text = row.innerText.toLowerCase();
+    row.style.display = text.includes(input) ? '' : 'none';
+  });
+}
+
+// PDF Export Function
 function generatePDF() {
   const element = document.getElementById('report-section');
   const opt = {
-    margin:       [10, 10, 10, 10],
-    filename:     'Rooftop_System_Telemetry_Log.pdf',
+    margin:       5,
+    filename:     'Rooftop_Telemetry_Report.pdf',
     image:        { type: 'jpeg', quality: 0.98 },
     html2canvas:  { scale: 2, backgroundColor: '#111827' },
     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
