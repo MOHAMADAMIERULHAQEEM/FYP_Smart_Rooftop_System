@@ -1,39 +1,256 @@
-/* Card Header with Inline Badge Button */
+:root {
+  --bg-color: #0b1329;
+  --card-bg: #16223f;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --text-primary: #ffffff;
+  --text-secondary: #94a3b8;
+  --accent-blue: #38bdf8;
+  --btn-green: #22c55e;
+  --btn-red: #ef4444;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+}
+
+.mobile-container {
+  padding: 16px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.page-section {
+  display: none;
+}
+
+.page-section.active {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Glass & Card Styling */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+/* Top 3 Sensor Cards Row */
+.top-sensor-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.sensor-card {
+  padding: 12px 8px;
+  text-align: center;
+}
+
+.sensor-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 0.5px;
+}
+
+.sensor-value {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: var(--accent-blue);
+  margin-top: 6px;
+}
+
+/* Live Status Box */
+.live-status-card {
+  text-align: center;
+  padding: 24px 16px;
+}
+
+.card-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.status-box h1 {
+  font-size: 2.2rem;
+  margin: 10px 0 0 0;
+  color: var(--accent-blue);
+  letter-spacing: 1px;
+}
+
+/* Manual Override & Mode Switch */
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 16px;
 }
 
 .card-header h3 {
   margin: 0;
+  font-size: 1.1rem;
 }
 
-/* Small Mode Badge Toggle Button */
-.badge-btn {
-  font-size: 0.75rem;
+.mode-toggle-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mode-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.mode-state {
+  font-size: 0.85rem;
   font-weight: bold;
-  padding: 4px 10px;
-  border-radius: 20px;
-  border: 1px solid var(--border-color);
+  color: var(--accent-blue);
+}
+
+/* CSS Toggle Switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
   cursor: pointer;
-  transition: all 0.2s ease;
-  text-transform: uppercase;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #334155;
+  transition: .3s;
+  border-radius: 24px;
 }
 
-.badge-btn.mode-auto {
-  background-color: rgba(56, 189, 248, 0.2);
-  color: #38bdf8;
-  border-color: #38bdf8;
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .3s;
+  border-radius: 50%;
 }
 
-.badge-btn.mode-manual {
-  background-color: rgba(234, 179, 8, 0.2);
-  color: #eab308;
-  border-color: #eab308;
+input:checked + .slider {
+  background-color: var(--accent-blue);
 }
 
-.badge-btn:hover {
-  transform: scale(1.05);
+input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+/* Buttons */
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.btn {
+  border: none;
+  border-radius: 12px;
+  padding: 14px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-open {
+  background-color: var(--btn-green);
+  color: #ffffff;
+}
+
+.btn-close {
+  background-color: var(--btn-red);
+  color: #ffffff;
+}
+
+.btn-nav {
+  width: 100%;
+  background-color: #1e293b;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  margin-top: 8px;
+}
+
+/* Page 2 Analytics */
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.btn-back {
+  background: transparent;
+  border: none;
+  color: var(--accent-blue);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.chart-card {
+  height: 220px;
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  max-height: 260px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+th, td {
+  padding: 8px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+th {
+  color: var(--text-secondary);
+}
+
+.pdf-action-area {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.btn-pdf {
+  background-color: var(--accent-blue);
+  color: #000;
+  padding: 10px 20px;
+  font-size: 0.9rem;
 }

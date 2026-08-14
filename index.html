@@ -1,45 +1,127 @@
-<!-- PAGE 1: CONTROL HUB -->
-<section id="control-page" class="page-section active">
-  <div class="grid-layout">
-    
-    <!-- Combined Roof Position & Mode Toggle Card -->
-    <div class="card glassmorphism control-card">
-      <div class="card-header">
-        <h3>Roof Position</h3>
-        <!-- Small Mode Toggle on Top Right -->
-        <button id="btn-toggle-mode" class="badge-btn mode-auto" onclick="toggleMode()">
-          MODE: <span id="mode-display">AUTO</span>
-        </button>
-      </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Smart Rooftop System</title>
+  <link rel="stylesheet" href="style.css?v=5" />
+  
+  <!-- Firebase & Libraries -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body class="dark-theme">
+  <div class="mobile-container">
+
+    <!-- PAGE 1: CONTROL HUB -->
+    <section id="page-1" class="page-section active">
       
-      <p>Status: <strong id="roof-status-display" class="highlight-text">CLOSED</strong></p>
-      
-      <div class="button-group">
-        <button id="btn-open" class="btn btn-success" onclick="setRoofStatus('OPEN')">Open Roof</button>
-        <button id="btn-close" class="btn btn-danger" onclick="setRoofStatus('CLOSED')">Close Roof</button>
+      <!-- Top Telemetry Row: TEMP | BRIGHT | HUMID -->
+      <div class="top-sensor-row">
+        <div class="card sensor-card">
+          <span class="sensor-title">TEMP</span>
+          <div class="sensor-value"><span id="temp-val">--</span>°C</div>
+        </div>
+        <div class="card sensor-card">
+          <span class="sensor-title">BRIGHT</span>
+          <div class="sensor-value"><span id="bright-val">--</span> Lux</div>
+        </div>
+        <div class="card sensor-card">
+          <span class="sensor-title">HUMID</span>
+          <div class="sensor-value"><span id="humid-val">--</span>%</div>
+        </div>
       </div>
-    </div>
 
-    <!-- Telemetry Cards -->
-    <div class="card glassmorphism">
-      <h3>Temperature</h3>
-      <div class="metric-value"><span id="temp-val">--</span> °C</div>
-    </div>
+      <!-- Current Roof Position Card (Live Feed / Status) -->
+      <div class="card live-status-card">
+        <span class="card-label">Live Feed / Status</span>
+        <div class="status-box">
+          <span class="status-sub">Current Roof Position:</span>
+          <h1 id="roof-status-display">CLOSED</h1>
+        </div>
+      </div>
 
-    <div class="card glassmorphism">
-      <h3>Humidity</h3>
-      <div class="metric-value"><span id="humidity-val">--</span> %</div>
-    </div>
+      <!-- Manual Override Control Card with Mode Toggle Switch -->
+      <div class="card override-card">
+        <div class="card-header">
+          <h3>Manual Override</h3>
+          
+          <!-- Mode Switch Toggle -->
+          <div class="mode-toggle-wrapper">
+            <span class="mode-label">Mode</span>
+            <label class="switch">
+              <input type="checkbox" id="mode-switch" onchange="toggleMode(this)">
+              <span class="slider round"></span>
+            </label>
+            <span id="mode-text" class="mode-state">Auto</span>
+          </div>
+        </div>
 
-    <div class="card glassmorphism">
-      <h3>Brightness</h3>
-      <div class="metric-value"><span id="brightness-val">--</span> Lux</div>
-    </div>
+        <!-- Full-Width Control Buttons -->
+        <div class="action-buttons">
+          <button id="btn-open" class="btn btn-action btn-open" onclick="setRoofStatus('OPEN')">Open Roof</button>
+          <button id="btn-close" class="btn btn-action btn-close" onclick="setRoofStatus('CLOSED')">Close Roof</button>
+        </div>
+      </div>
 
-    <div class="card glassmorphism">
-      <h3>Rain Sensor</h3>
-      <div class="metric-value"><span id="rain-val">--</span></div>
-    </div>
+      <!-- Navigation to Analytics -->
+      <div class="nav-bottom">
+        <button class="btn btn-nav" onclick="switchPage('page-2')">DATA & ANALYTICS ➔</button>
+      </div>
+
+    </section>
+
+    <!-- PAGE 2: DATA & ANALYTICS -->
+    <section id="page-2" class="page-section">
+      
+      <div class="page-header">
+        <button class="btn-back" onclick="switchPage('page-1')">⬅ Back</button>
+        <h2>Telemetry Analytics</h2>
+      </div>
+
+      <div id="export-container">
+        <!-- Live Graph -->
+        <div class="card chart-card">
+          <canvas id="telemetryChart"></canvas>
+        </div>
+
+        <!-- Historical Data Table -->
+        <div class="card table-card">
+          <div class="table-header">
+            <h3>History Logs</h3>
+            <span class="filter-icon" title="Filter Data">⚡ Filter</span>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Temp</th>
+                  <th>Humid</th>
+                  <th>Bright</th>
+                  <th>Rain</th>
+                  <th>Source</th>
+                </tr>
+              </thead>
+              <tbody id="table-body">
+                <!-- Dynamic Logs -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- PDF Export Button at Bottom Right -->
+      <div class="pdf-action-area">
+        <button class="btn btn-pdf" onclick="exportPDF()">Print PDF</button>
+      </div>
+
+    </section>
 
   </div>
-</section>
+
+  <script src="app.js?v=5"></script>
+</body>
+</html>
