@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Smart Rooftop System</title>
-  <link rel="stylesheet" href="style.css?v=6" />
+  <link rel="stylesheet" href="style.css?v=8" />
   
   <!-- Firebase & Libraries -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -18,7 +18,7 @@
     <!-- PAGE 1: CONTROL HUB -->
     <section id="page-1" class="page-section active">
       
-      <!-- Top Telemetry Row: TEMP | BRIGHT | HUMID -->
+      <!-- Top Telemetry Row -->
       <div class="top-sensor-row">
         <div class="card sensor-card">
           <span class="sensor-title">TEMP</span>
@@ -34,7 +34,7 @@
         </div>
       </div>
 
-      <!-- Current Roof Position Card (Live Feed / Status) -->
+      <!-- Live Status Card -->
       <div class="card live-status-card">
         <span class="card-label">Live Feed / Status</span>
         <div class="status-box">
@@ -43,12 +43,10 @@
         </div>
       </div>
 
-      <!-- Manual Override Control Card with Mode Toggle Switch -->
+      <!-- Manual Override Card -->
       <div class="card override-card">
         <div class="card-header">
           <h3>Manual Override</h3>
-          
-          <!-- Mode Switch Toggle -->
           <div class="mode-toggle-wrapper">
             <span class="mode-label">Mode</span>
             <label class="switch">
@@ -59,7 +57,6 @@
           </div>
         </div>
 
-        <!-- Full-Width Control Buttons -->
         <div class="action-buttons">
           <button id="btn-open" class="btn btn-action btn-open" onclick="setRoofStatus('OPEN')">Open Roof</button>
           <button id="btn-close" class="btn btn-action btn-close" onclick="setRoofStatus('CLOSED')">Close Roof</button>
@@ -87,10 +84,10 @@
           <canvas id="telemetryChart"></canvas>
         </div>
 
-        <!-- Historical Data Table with Filter Select -->
+        <!-- History Table Card -->
         <div class="card table-card">
           <div class="table-header">
-            <h3>History Logs</h3>
+            <h3>History Logs (5s Tick)</h3>
             
             <div class="filter-wrapper">
               <label for="table-filter">Filter:</label>
@@ -115,22 +112,39 @@
                 </tr>
               </thead>
               <tbody id="table-body">
-                <!-- Dynamic Rows Inserted via JS -->
+                <!-- Dynamic Logs (Every 5 Seconds) -->
               </tbody>
             </table>
           </div>
         </div>
       </div>
 
-      <!-- Mobile PDF Export Button -->
+      <!-- Print Action Area -->
       <div class="pdf-action-area">
-        <button class="btn btn-pdf" onclick="exportMobilePDF()">📄 Print PDF Report</button>
+        <button class="btn btn-pdf" onclick="openReportModal()">📄 View & Print Report</button>
       </div>
 
     </section>
 
   </div>
 
-  <script src="app.js?v=6"></script>
+  <!-- PRINT REPORT MODAL OVERLAY -->
+  <div id="report-modal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Telemetry Report Preview</h3>
+        <button class="btn-close-modal" onclick="closeReportModal()">✕</button>
+      </div>
+      <div id="modal-report-body" class="modal-body">
+        <!-- Report Preview Inserted via JS -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-nav" onclick="closeReportModal()">Close</button>
+        <button class="btn btn-pdf" onclick="triggerDownloadPDF()">Download PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js?v=8"></script>
 </body>
 </html>
