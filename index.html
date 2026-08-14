@@ -1,165 +1,111 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Smart Rooftop Control Center | FYP</title>
-  
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  
-  <link rel="stylesheet" href="style.css">
-  
-  <!-- Firebase, Chart.js & html2pdf -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Smart Rooftop Control System</title>
+  <link rel="stylesheet" href="style.css?v=3" />
+  <!-- Firebase App & Database Legacy SDKs -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <!-- Chart.js for Telemetry Graphs -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- html2pdf Library for Android WebViewer PDF Export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
-<body>
-
-  <div class="app-container">
+<body class="dark-theme">
+  <div class="dashboard-container">
     
-    <!-- System Header -->
-    <header class="header-card">
-      <div class="header-title">
-        <h1>SMART ROOFTOP SYSTEM</h1>
-        <p class="subtitle">AUTOMATED INDUSTRIAL MONITORING</p>
+    <!-- Sidebar / Top Navigation -->
+    <nav class="navbar">
+      <h2>ROOFTOP HUB</h2>
+      <div class="nav-links">
+        <button class="nav-btn active" onclick="switchPage('control')">Control Hub</button>
+        <button class="nav-btn" onclick="switchPage('analytics')">Data & Analytics</button>
       </div>
-      <div class="connection-indicator">
-        <span class="pulse-dot"></span>
-        <span id="conn-text">CLOUD ACTIVE</span>
-      </div>
-    </header>
+    </nav>
 
-    <!-- PAGE 1: MAIN CONTROL HUB -->
-    <div id="page-1" class="page-view active">
-      
-      <!-- Sensor Metrics Grid (Draft Layout) -->
-      <section class="sensor-grid">
-        <div class="card sensor-card">
-          <span class="sensor-label">TEMP</span>
-          <div class="sensor-value" id="val-temp">-- °C</div>
+    <!-- PAGE 1: CONTROL HUB -->
+    <section id="control-page" class="page-section active">
+      <div class="grid-layout">
+        
+        <!-- System Mode Card -->
+        <div class="card glassmorphism">
+          <h3>System Operating Mode</h3>
+          <p>Current Mode: <strong id="mode-display" class="highlight-text">AUTO</strong></p>
+          <button id="btn-toggle-mode" class="btn btn-warning" onclick="toggleMode()">Switch to MANUAL</button>
         </div>
-        <div class="card sensor-card">
-          <span class="sensor-label">WEATHER / BRIGHT</span>
-          <div class="sensor-value" id="val-bright">-- Lux</div>
-        </div>
-        <div class="card sensor-card">
-          <span class="sensor-label">HUMIDITY</span>
-          <div class="sensor-value" id="val-humid">-- %</div>
-        </div>
-      </section>
 
-      <!-- System Monitor -->
-      <section class="card status-section">
-        <div class="card-header">
-          <h2>SYSTEM MONITOR</h2>
-          <span class="card-tag">LIVE FEED</span>
-        </div>
-        <div class="status-display">
-          <div class="status-label">CURRENT ROOF POSITION</div>
-          <div id="status-badge" class="badge connecting">CONNECTING...</div>
-          <div class="status-subtext" id="last-update">Awaiting data sync...</div>
-        </div>
-      </section>
-
-      <!-- Manual Controls -->
-      <section class="card control-section">
-        <div class="card-header">
-          <h2>MANUAL OVERRIDE</h2>
-          <span class="card-tag">ACTUATORS</span>
-        </div>
-        <div class="button-grid">
-          <button id="btn-open" class="btn btn-open" onclick="setRoofState('OPEN')">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
-            OPEN ROOF
-          </button>
-          <button id="btn-close" class="btn btn-close" onclick="setRoofState('CLOSED')">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
-            CLOSE ROOF
-          </button>
-        </div>
-      </section>
-
-      <!-- Page Switcher Button -->
-      <button class="btn btn-nav" onclick="switchPage('page-2')">
-        VIEW SYSTEM DATA & ANALYTICS &rarr;
-      </button>
-    </div>
-
-    <!-- PAGE 2: DATA & ANALYTICS PAGE -->
-    <div id="page-2" class="page-view">
-      
-      <!-- Back Button -->
-      <button class="btn btn-back" onclick="switchPage('page-1')">
-        &larr; BACK TO CONTROL PANEL
-      </button>
-
-      <!-- Chart View -->
-      <section class="card chart-section">
-        <div class="card-header">
-          <h2>TEMPERATURE VS TIME</h2>
-          <span class="card-tag">REAL-TIME GRAPH</span>
-        </div>
-        <div class="chart-wrapper">
-          <canvas id="tempChart"></canvas>
-        </div>
-      </section>
-
-      <!-- Telemetry Table & Filters -->
-      <section class="card data-section" id="report-section">
-        <div class="data-header">
-          <div>
-            <h2>SYSTEM LOGS TABLE</h2>
-            <p class="data-subtitle">Historical sensor & control audit</p>
-          </div>
-          
-          <div class="filter-box">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
-            <input type="text" id="table-search" placeholder="Filter records..." onkeyup="filterTable()">
+        <!-- Roof Status Card -->
+        <div class="card glassmorphism">
+          <h3>Roof Position</h3>
+          <p>Status: <strong id="roof-status-display" class="highlight-text">CLOSED</strong></p>
+          <div class="button-group">
+            <button id="btn-open" class="btn btn-success" onclick="setRoofStatus('OPEN')">Open Roof</button>
+            <button id="btn-close" class="btn btn-danger" onclick="setRoofStatus('CLOSED')">Close Roof</button>
           </div>
         </div>
 
-        <!-- Scrollable Table Wrapper -->
-        <div class="scrollable-table-wrapper">
-          <table class="telemetry-table" id="data-table">
-            <thead>
-              <tr>
-                <th>TIME</th>
-                <th>TEMP</th>
-                <th>HUMID</th>
-                <th>BRIGHTNESS</th>
-                <th>RAIN STATUS</th>
-                <th>SOURCE ORIGIN</th>
-              </tr>
-            </thead>
-            <tbody id="logs-table-body">
-              <tr>
-                <td colspan="6" class="loading-cell">Retrieving history logs from cloud...</td>
-              </tr>
-            </tbody>
-          </table>
+        <!-- Telemetry Summary Cards -->
+        <div class="card glassmorphism">
+          <h3>Temperature</h3>
+          <div class="metric-value"><span id="temp-val">--</span> °C</div>
+        </div>
+        <div class="card glassmorphism">
+          <h3>Humidity</h3>
+          <div class="metric-value"><span id="humidity-val">--</span> %</div>
+        </div>
+        <div class="card glassmorphism">
+          <h3>Brightness</h3>
+          <div class="metric-value"><span id="brightness-val">--</span> Lux</div>
+        </div>
+        <div class="card glassmorphism">
+          <h3>Rain Sensor</h3>
+          <div class="metric-value"><span id="rain-val">--</span></div>
         </div>
 
-        <!-- Export PDF / Print Button Placed Directly Under Table -->
-        <div class="table-actions">
-          <button class="btn btn-pdf" onclick="generatePDF()">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg>
-            PRINT / EXPORT REPORT (PDF)
-          </button>
+      </div>
+    </section>
+
+    <!-- PAGE 2: DATA & ANALYTICS -->
+    <section id="analytics-page" class="page-section">
+      <div class="analytics-header">
+        <h2>System Telemetry & Historical Data</h2>
+        <button class="btn btn-primary" onclick="exportPDF()">Export PDF Report</button>
+      </div>
+
+      <div id="analytics-export-area">
+        <!-- Chart.js Graph -->
+        <div class="card glassmorphism chart-card">
+          <canvas id="telemetryChart"></canvas>
         </div>
-      </section>
 
-    </div>
-
-    <footer class="footer">
-      <p>Final Year Engineering Project &bull; Smart Rooftop System</p>
-    </footer>
+        <!-- Telemetry Table -->
+        <div class="card glassmorphism table-card">
+          <h3>Historical Telemetry Logs</h3>
+          <div class="table-wrapper">
+            <table id="telemetry-table">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Temp (°C)</th>
+                  <th>Humidity (%)</th>
+                  <th>Brightness</th>
+                  <th>Rain</th>
+                  <th>Roof Status</th>
+                </tr>
+              </thead>
+              <tbody id="table-body">
+                <!-- Dynamic Rows Inserted Here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
 
   </div>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=3"></script>
 </body>
 </html>
