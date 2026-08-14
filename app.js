@@ -32,26 +32,34 @@ database.ref('rooftop_system').on('value', (snapshot) => {
   const data = snapshot.val();
   if (!data) return;
 
-  // Mode & Roof Status
+  // Mode Display & Dynamic Badge Styling
   currentMode = data.mode || "AUTO";
-  document.getElementById('mode-display').innerText = currentMode;
-  document.getElementById('btn-toggle-mode').innerText = 
-    (currentMode === "AUTO") ? "Switch to MANUAL" : "Switch to AUTO";
+  const modeDisplay = document.getElementById('mode-display');
+  const modeBtn = document.getElementById('btn-toggle-mode');
+  
+  if (modeDisplay) modeDisplay.innerText = currentMode;
+  
+  if (modeBtn) {
+    if (currentMode === "AUTO") {
+      modeBtn.className = "badge-btn mode-auto";
+    } else {
+      modeBtn.className = "badge-btn mode-manual";
+    }
+  }
 
+  // Roof Status & Telemetry Updates
   document.getElementById('roof-status-display').innerText = data.roof_status || "CLOSED";
-
-  // Telemetry Display
   document.getElementById('temp-val').innerText = data.temp !== undefined ? data.temp : "--";
   document.getElementById('humidity-val').innerText = data.humidity !== undefined ? data.humidity : "--";
   document.getElementById('brightness-val').innerText = data.brightness !== undefined ? data.brightness : "--";
   document.getElementById('rain-val').innerText = data.is_raining ? "DETECTED" : "DRY";
 
-  // Append entry to historical table
+  // Append real-time entry to history table
   appendTableData(data);
 });
 
 // ----------------------------------------------------
-// UI ACTIONS TO FIREBASE
+// CONTROL HUB ACTIONS
 // ----------------------------------------------------
 function toggleMode() {
   const newMode = (currentMode === "AUTO") ? "MANUAL" : "AUTO";
@@ -60,17 +68,19 @@ function toggleMode() {
 
 function setRoofStatus(status) {
   if (currentMode === "AUTO") {
-    alert("System is currently in AUTO mode. Please switch to MANUAL mode to control the roof manually.");
+    alert("System is currently in AUTO mode. Toggle the MODE badge to MANUAL to enable manual controls.");
     return;
   }
   database.ref('rooftop_system/roof_status').set(status);
 }
 
 // ----------------------------------------------------
-// TABLE & ANALYTICS
+// HISTORICAL TABLE & ANALYTICS CHART
 // ----------------------------------------------------
 function appendTableData(data) {
   const tableBody = document.getElementById('table-body');
+  if (!tableBody) return;
+
   const timestamp = new Date().toLocaleTimeString();
   
   const row = `
@@ -88,10 +98,12 @@ function appendTableData(data) {
 }
 
 function renderChart() {
-  const ctx = document.getElementById('telemetryChart').getContext('2d');
+  const ctx = document.getElementById('telemetryChart');
+  if (!ctx) return;
+
   if (chartInstance) chartInstance.destroy();
 
-  chartInstance = new Chart(ctx, {
+  chartInstance = new Chart(ctx.getContext('2d'), {
     type: 'line',
     data: {
       labels: ['10m ago', '8m ago', '6m ago', '4m ago', '2m ago', 'Now'],
@@ -104,9 +116,13 @@ function renderChart() {
   });
 }
 
-// Mobile WebViewer PDF Export
+// ----------------------------------------------------
+// MOBILE WEBVIEWER PDF EXPORT (html2pdf)
+// ----------------------------------------------------
 function exportPDF() {
   const element = document.getElementById('analytics-export-area');
+  if (!element) return;
+
   const opt = {
     margin:       10,
     filename:     'Rooftop_Telemetry_Report.pdf',
