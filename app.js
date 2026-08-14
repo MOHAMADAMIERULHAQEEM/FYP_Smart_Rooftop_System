@@ -9,6 +9,10 @@ const database = firebase.database();
 let currentMode = "AUTO";
 let chartInstance = null;
 
+// Local logs cache for table filtering
+let rawTelemetryLogs = []; 
+let activeFilter = "all";
+
 // Navigation Switcher
 function switchPage(pageId) {
   document.querySelectorAll('.page-section').forEach(sec => sec.classList.remove('active'));
@@ -19,7 +23,9 @@ function switchPage(pageId) {
   }
 }
 
-// Realtime Database Listener
+// ----------------------------------------------------
+// REALTIME FIREBASE LISTENER
+// ----------------------------------------------------
 database.ref('rooftop_system').on('value', (snapshot) => {
   const data = snapshot.val();
   if (!data) return;
@@ -29,25 +35,39 @@ database.ref('rooftop_system').on('value', (snapshot) => {
   const switchInput = document.getElementById('mode-switch');
   const modeText = document.getElementById('mode-text');
 
-  if (currentMode === "MANUAL") {
-    switchInput.checked = true;
-    modeText.innerText = "Manual";
-  } else {
-    switchInput.checked = false;
-    modeText.innerText = "Auto";
+  if (switchInput && modeText) {
+    if (currentMode === "MANUAL") {
+      switchInput.checked = true;
+      modeText.innerText = "Manual";
+    } else {
+      switchInput.checked = false;
+      modeText.innerText = "Auto";
+    }
   }
 
-  // Update Telemetry Displays
+  // Update Top & Center Telemetry Display
   document.getElementById('temp-val').innerText = data.temp !== undefined ? data.temp : "--";
   document.getElementById('bright-val').innerText = data.brightness !== undefined ? data.brightness : "--";
   document.getElementById('humid-val').innerText = data.humidity !== undefined ? data.humidity : "--";
   document.getElementById('roof-status-display').innerText = data.roof_status || "CLOSED";
 
-  // Append entry to table
-  appendTableData(data);
+  // Cache entry with timestamp for filtering
+  const newRecord = {
+    timestamp: new Date(),
+    temp: data.temp !== undefined ? data.temp : "--",
+    humidity: data.humidity !== undefined ? data.humidity : "--",
+    brightness: data.brightness !== undefined ? data.brightness : "--",
+    is_raining: data.is_raining ? "YES" : "NO",
+    roof_status: data.roof_status || "CLOSED"
+  };
+
+  rawTelemetryLogs.unshift(newRecord);
+  renderFilteredTable();
 });
 
-// UI Actions
+// ----------------------------------------------------
+// MANUAL CONTROLS
+// ----------------------------------------------------
 function toggleMode(checkbox) {
   const newMode = checkbox.checked ? "MANUAL" : "AUTO";
   database.ref('rooftop_system/mode').set(newMode);
@@ -61,29 +81,52 @@ function setRoofStatus(status) {
   database.ref('rooftop_system/roof_status').set(status);
 }
 
-// Table Log Insertion
-function appendTableData(data) {
+// ----------------------------------------------------
+// TABLE FILTERING (ALL TIME / 24 HOURS / 7 DAYS)
+// ----------------------------------------------------
+function applyTableFilter(filterValue) {
+  activeFilter = filterValue;
+  renderFilteredTable();
+}
+
+function renderFilteredTable() {
   const tableBody = document.getElementById('table-body');
   if (!tableBody) return;
 
-  const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  const source = (currentMode === "AUTO") ? "Auto" : "Manual";
+  const now = new Date();
+  let filteredLogs = rawTelemetryLogs;
 
-  const row = `
-    <tr>
-      <td>${timestamp}</td>
-      <td>${data.temp}°C</td>
-      <td>${data.humidity}%</td>
-      <td>${data.brightness}</td>
-      <td>${data.is_raining ? "Rain" : "Dry"}</td>
-      <td>${source}</td>
-    </tr>
-  `;
+  if (activeFilter === "24h") {
+    const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
+    filteredLogs = rawTelemetryLogs.filter(log => log.timestamp >= twentyFourHoursAgo);
+  } else if (activeFilter === "7d") {
+    const sevenDaysAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+    filteredLogs = rawTelemetryLogs.filter(log => log.timestamp >= sevenDaysAgo);
+  }
 
-  tableBody.insertAdjacentHTML('afterbegin', row);
+  let rowsHtml = "";
+  filteredLogs.forEach(log => {
+    const timeStr = log.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const dateStr = log.timestamp.toLocaleDateString();
+    
+    rowsHtml += `
+      <tr>
+        <td>${timeStr}<br><small style="color:#64748b">${dateStr}</small></td>
+        <td>${log.temp}°C</td>
+        <td>${log.humidity}%</td>
+        <td>${log.brightness}</td>
+        <td>${log.is_raining}</td>
+        <td><strong>${log.roof_status}</strong></td>
+      </tr>
+    `;
+  });
+
+  tableBody.innerHTML = rowsHtml.length > 0 ? rowsHtml : `<tr><td colspan="6" style="text-align:center;">No data available for this range.</td></tr>`;
 }
 
-// Render Graph for Page 2
+// ----------------------------------------------------
+// CHART RENDER
+// ----------------------------------------------------
 function renderChart() {
   const ctx = document.getElementById('telemetryChart');
   if (!ctx) return;
@@ -103,16 +146,60 @@ function renderChart() {
   });
 }
 
-// PDF Export (Mobile WebViewer Compatible)
-function exportPDF() {
-  const element = document.getElementById('export-container');
+// ----------------------------------------------------
+// MOBILE WEBVIEWER COMPATIBLE PDF EXPORTER
+// ----------------------------------------------------
+function exportMobilePDF() {
+  // Construct clean standalone HTML document container
+  const reportElement = document.createElement('div');
+  
+  let rowsHtml = "";
+  rawTelemetryLogs.forEach(log => {
+    rowsHtml += `
+      <tr>
+        <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: center;">${log.timestamp.toLocaleString()}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: center;">${log.temp} °C</td>
+        <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: center;">${log.humidity} %</td>
+        <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: center;">${log.brightness} Lux</td>
+        <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: center;">${log.is_raining}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: center;"><strong>${log.roof_status}</strong></td>
+      </tr>
+    `;
+  });
+
+  reportElement.innerHTML = `
+    <div style="font-family: Arial, sans-serif; padding: 15px; color: #1e293b;">
+      <h2 style="text-align: center; margin-bottom: 5px;">SMART ROOFTOP TELEMETRY REPORT</h2>
+      <p style="text-align: center; color: #64748b; font-size: 12px; margin-top: 0;">
+        Generated: ${new Date().toLocaleString()} | Filter Range: ${activeFilter.toUpperCase()}
+      </p>
+      
+      <table style="width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px;">
+        <thead>
+          <tr style="background-color: #0f172a; color: #ffffff;">
+            <th style="padding: 8px; border: 1px solid #0f172a;">Timestamp</th>
+            <th style="padding: 8px; border: 1px solid #0f172a;">Temp</th>
+            <th style="padding: 8px; border: 1px solid #0f172a;">Humidity</th>
+            <th style="padding: 8px; border: 1px solid #0f172a;">Brightness</th>
+            <th style="padding: 8px; border: 1px solid #0f172a;">Rain</th>
+            <th style="padding: 8px; border: 1px solid #0f172a;">Roof Position</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rowsHtml.length > 0 ? rowsHtml : '<tr><td colspan="6" style="text-align:center; padding:10px;">No telemetry data logged yet.</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+  `;
+
   const opt = {
-    margin: 8,
-    filename: 'Rooftop_Telemetry_Report.pdf',
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2 },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    margin:       8,
+    filename:     'Rooftop_Telemetry_Report.pdf',
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 2 },
+    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
 
-  html2pdf().set(opt).from(element).save();
+  // Convert and trigger instant download on mobile
+  html2pdf().set(opt).from(reportElement).save();
 }

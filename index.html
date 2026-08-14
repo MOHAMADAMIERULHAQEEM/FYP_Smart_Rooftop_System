@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Smart Rooftop System</title>
-  <link rel="stylesheet" href="style.css?v=5" />
+  <link rel="stylesheet" href="style.css?v=6" />
   
   <!-- Firebase & Libraries -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -87,14 +87,23 @@
           <canvas id="telemetryChart"></canvas>
         </div>
 
-        <!-- Historical Data Table -->
+        <!-- Historical Data Table with Filter Select -->
         <div class="card table-card">
           <div class="table-header">
             <h3>History Logs</h3>
-            <span class="filter-icon" title="Filter Data">⚡ Filter</span>
+            
+            <div class="filter-wrapper">
+              <label for="table-filter">Filter:</label>
+              <select id="table-filter" class="filter-dropdown" onchange="applyTableFilter(this.value)">
+                <option value="all">All Time</option>
+                <option value="24h">Last 24 Hours</option>
+                <option value="7d">Last 7 Days</option>
+              </select>
+            </div>
           </div>
+
           <div class="table-wrapper">
-            <table>
+            <table id="telemetry-table">
               <thead>
                 <tr>
                   <th>Time</th>
@@ -102,26 +111,26 @@
                   <th>Humid</th>
                   <th>Bright</th>
                   <th>Rain</th>
-                  <th>Source</th>
+                  <th>Roof</th>
                 </tr>
               </thead>
               <tbody id="table-body">
-                <!-- Dynamic Logs -->
+                <!-- Dynamic Rows Inserted via JS -->
               </tbody>
             </table>
           </div>
         </div>
       </div>
 
-      <!-- PDF Export Button at Bottom Right -->
+      <!-- Mobile PDF Export Button -->
       <div class="pdf-action-area">
-        <button class="btn btn-pdf" onclick="exportPDF()">Print PDF</button>
+        <button class="btn btn-pdf" onclick="exportMobilePDF()">📄 Print PDF Report</button>
       </div>
 
     </section>
 
   </div>
 
-  <script src="app.js?v=5"></script>
+  <script src="app.js?v=6"></script>
 </body>
 </html>

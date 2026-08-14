@@ -42,7 +42,7 @@ body {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
 }
 
-/* Top 3 Sensor Cards Row */
+/* Top Sensor Row */
 .top-sensor-row {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -68,7 +68,7 @@ body {
   margin-top: 6px;
 }
 
-/* Live Status Box */
+/* Live Status Card */
 .live-status-card {
   text-align: center;
   padding: 24px 16px;
@@ -87,7 +87,7 @@ body {
   letter-spacing: 1px;
 }
 
-/* Manual Override & Mode Switch */
+/* Override & Mode Switch Header */
 .card-header {
   display: flex;
   justify-content: space-between;
@@ -160,7 +160,7 @@ input:checked + .slider:before {
   transform: translateX(20px);
 }
 
-/* Buttons */
+/* Action Buttons */
 .action-buttons {
   display: flex;
   flex-direction: column;
@@ -195,7 +195,7 @@ input:checked + .slider:before {
   margin-top: 8px;
 }
 
-/* Page 2 Analytics */
+/* Analytics Header & Filter */
 .page-header {
   display: flex;
   align-items: center;
@@ -219,6 +219,24 @@ input:checked + .slider:before {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
+}
+
+.filter-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.filter-dropdown {
+  background: #1e293b;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  outline: none;
 }
 
 .table-wrapper {
